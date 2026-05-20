@@ -1,0 +1,8 @@
+.env
+.claude/
+__pycache__/
+*.pyc
+*.pyo
+.vercel
+*.egg-info/
+.DS_Store
