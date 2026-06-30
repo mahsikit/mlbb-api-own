@@ -107,7 +107,7 @@ docs/
 | GET  | `/api/user/ip` | — | Caller IP geolocation: city, state, country, lang (no auth) |
 | GET  | `/api/user/server-config` | — | Moonton server time + captcha version (no auth) |
 | GET  | `/api/user/heroes/catalog` | — | All 132 heroes: name, role, lane, difficulty, portrait (no auth) |
-| GET  | `/api/user/heroes/stats` | `window=7d` (1d/3d/7d/15d/30d) | Hero win/pick/ban rates by time window (no auth) |
+| GET  | `/api/user/heroes/stats` | `window=7d` (1d/3d/7d/15d/30d), `bigrank=7` (7=Mythic, 8=Honor, 9=Glory) | Hero win/pick/ban rates by time window and rank tier (no auth) |
 | GET  | `/api/user/heroes/combos` | — | Curated hero skill combo guides (no auth) |
 | GET  | `/api/user/heroes/trends` | `window=7d` (7d/15d/30d) | Daily win-rate trend per hero (no auth) |
 | GET  | `/api/user/heroes/stats/by-lane` | — | Hero win rate by lane and rank tier (no auth) |

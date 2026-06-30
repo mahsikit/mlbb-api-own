@@ -105,13 +105,14 @@ def server_config() -> Any:
 @router.get("/heroes/stats", summary="Hero win/pick/ban rates by time window (no auth)")
 def hero_stats(
     window: HeroStatsWindow = Query(default=HeroStatsWindow.w7d, description="Time window: 1d, 3d, 7d, 15d, 30d"),
+    bigrank: int | None = Query(default=None, description="Filter by bigrank (e.g. 7=Mythic, 8=Honor, 9=Glory)"),
 ) -> Any:
     """
     Hero win/pick/ban stats from GMS source 2669606.
     Records keyed by bigrank (1=All, 2=Epic+) and camp_type (0=Classic, 1=Ranked).
     Key fields per record: main_hero.data.{heroid, name}, win_rate, pick_rate, ban_rate.
     """
-    return _call(svc.get_hero_stats, window.value)
+    return _call(svc.get_hero_stats, window.value, bigrank)
 
 
 @router.get("/heroes/combos", summary="Hero skill combos guide (no auth)")

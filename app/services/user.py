@@ -182,12 +182,15 @@ _HERO_TRENDS_ID: dict[str, str] = {
 }
 
 
-def _gms_source_post(endpoint_id: str) -> Any:
-    return post_json_public(f"{GMS_SOURCE_ROOT}/{endpoint_id}", {"pageSize": 200})
+def _gms_source_post(endpoint_id: str, bigrank: int | None = None) -> Any:
+    payload = {"pageSize": 10000}
+    if bigrank is not None:
+        payload["filters"] = [{"field": "bigrank", "operator": "eq", "value": str(bigrank)}]
+    return post_json_public(f"{GMS_SOURCE_ROOT}/{endpoint_id}", payload)
 
 
-def get_hero_stats(window: str) -> Any:
-    return _gms_source_post(_HERO_STATS_ID[window])
+def get_hero_stats(window: str, bigrank: int | None = None) -> Any:
+    return _gms_source_post(_HERO_STATS_ID[window], bigrank=bigrank)
 
 
 def get_hero_combos() -> Any:
