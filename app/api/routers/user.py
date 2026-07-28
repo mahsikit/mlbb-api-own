@@ -4,12 +4,13 @@ from enum import Enum
 from typing import Annotated, Any
 
 import httpx
-from fastapi import APIRouter, Body, Depends, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, Response
 
 from app.api.deps import require_jwt
 from app.core.config import STATS_BASE
 from app.schemas.user import LoginRequest, LogoutRequest, SendVcRequest, UserInfoRequest
 from app.services import user as svc
+from app.services import patches as patch_svc
 
 
 class StubMatchName(str, Enum):
@@ -100,6 +101,40 @@ def rankings_subject(subject_id: str) -> Any:
 def server_config() -> Any:
     """Public probe — returns Moonton's server Unix time and current captcha version."""
     return _call(svc.get_server_config)
+
+
+def _set_public_cache(response: Response) -> None:
+    response.headers["Cache-Control"] = "public, max-age=300, s-maxage=900"
+    response.headers["CDN-Cache-Control"] = "public, s-maxage=900"
+
+
+@router.get("/patches", summary="Official MLBB patch notes (no auth)")
+def patch_list(
+    response: Response,
+    limit: int = Query(default=20, ge=1, le=50),
+) -> Any:
+    _set_public_cache(response)
+    return _call(patch_svc.get_patch_list, limit)
+
+
+@router.get("/patches/latest", summary="Latest official MLBB patch (no auth)")
+def latest_patch(response: Response) -> Any:
+    _set_public_cache(response)
+    return _call(patch_svc.get_latest_patch)
+
+
+@router.get("/patches/{news_id}", summary="Official MLBB patch detail (no auth)")
+def patch_detail(news_id: int, response: Response) -> Any:
+    _set_public_cache(response)
+    try:
+        return patch_svc.get_patch_article(news_id)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Official patch source is temporarily unavailable: {exc}",
+        ) from exc
 
 
 @router.get("/heroes/stats", summary="Hero win/pick/ban rates by time window (no auth)")

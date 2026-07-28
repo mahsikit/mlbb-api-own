@@ -110,6 +110,9 @@ docs/
 | GET  | `/api/user/heroes/stats` | `window=7d` (1d/3d/7d/15d/30d), `bigrank=7` (7=Mythic, 8=Honor, 9=Glory) | Hero win/pick/ban rates by time window and rank tier (no auth) |
 | GET  | `/api/user/heroes/combos` | — | Curated hero skill combo guides (no auth) |
 | GET  | `/api/user/heroes/trends` | `window=7d` (7d/15d/30d) | Daily win-rate trend per hero (no auth) |
+| GET  | `/api/user/patches?limit=N` | `limit=1..50` | Official patch-note index, restricted to exact `x.y.z PATCH NOTES` titles |
+| GET  | `/api/user/patches/latest` | — | Latest official patch with normalized designer, hero, battlefield, and equipment changes |
+| GET  | `/api/user/patches/{news_id}` | — | One normalized official patch article by Moonton news ID |
 | GET  | `/api/user/heroes/stats/by-lane` | — | Hero win rate by lane and rank tier (no auth) |
 | GET  | `/api/user/catalog/equipment` | — | 184 items: id, name, icon URL — resolves item IDs in match builds (no auth) |
 | GET  | `/api/user/catalog/ranks` | — | bigrank 1–7 → tier names (Warrior→Mythic) + sub-rank icons (no auth) |
@@ -149,6 +152,15 @@ cp .env.example .env
 uvicorn app.main:app --reload
 # open http://localhost:8000/docs
 ```
+
+## Official patch-note source
+
+Patch notes come from Moonton GMS source `2669606/2672947`, patch channel
+`2678956`. Upstream rich-text HTML is parsed server-side and never returned
+directly. Hero changes are normalized as `buff`, `nerf`, or `adjustment`,
+including plain-text summaries and skill/detail lines. Responses use public
+CDN caching, the shared 8-second upstream timeout, response-shape validation,
+and a process-local last-known-good fallback after a successful fetch.
 
 ## Deploy to Vercel
 See docs/deployment.md for step-by-step instructions.
