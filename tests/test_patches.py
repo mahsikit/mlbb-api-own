@@ -26,6 +26,8 @@ PATCH_BODY = """
 <div>Reduced excessive control while improving durability.</div>
 <div>[Skill 1] (↓)</div>
 <div>Removed the immobilize effect.</div>
+<div>[Enhanced Skill 2] (↓)</div>
+<div>Reduced the enhanced damage.</div>
 <div>[Zhuxin] (↓)</div>
 <div>Increased Skill 2's Mana Cost.</div>
 <div><strong>3. Battlefield Adjustment</strong></div>

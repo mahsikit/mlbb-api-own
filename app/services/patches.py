@@ -94,7 +94,11 @@ def _is_hero_heading(label: str) -> bool:
     normalized = label.strip().lower()
     if normalized in _NON_HERO_HEADINGS:
         return False
-    if normalized.startswith(("skill ", "basic attack", "battle spell")):
+    if normalized.startswith(("basic attack", "battle spell")):
+        return False
+    # Not just a "Skill 1" prefix: 2.2.16 used "[Enhanced Skill 2]", which was
+    # read as a hero. No hero name contains the word.
+    if re.search(r"\bskill\b", normalized):
         return False
     return True
 
