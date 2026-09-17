@@ -38,10 +38,44 @@ class PatchParserTests(unittest.TestCase):
         patches._cache.clear()
         patches._last_known_good.clear()
 
-    def test_only_accepts_full_patch_note_titles(self) -> None:
+    def test_accepts_patch_note_titles_including_truncated_versions(self) -> None:
         self.assertIsNotNone(PATCH_TITLE_RE.match("2.1.88 PATCH NOTES"))
+        self.assertIsNotNone(PATCH_TITLE_RE.match("2.1.95a PATCH NOTES"))
+        # Moonton's own title for patch 2.2.16, with the version truncated.
+        self.assertIsNotNone(PATCH_TITLE_RE.match("16 PATCH NOTES"))
         self.assertIsNone(PATCH_TITLE_RE.match("PROJECT NEXT Patch Preview"))
         self.assertIsNone(PATCH_TITLE_RE.match("Patch Update Overview"))
+        self.assertIsNone(PATCH_TITLE_RE.match("Revamped Freya Design Concept"))
+
+    def test_unusable_version_is_reported_as_none_not_dropped(self) -> None:
+        result = normalize_patch_record(
+            {
+                "id": 3503357,
+                "data": {
+                    "title": "16 PATCH NOTES",
+                    "start_time": 1789545600000,
+                    "cover": None,
+                    "body": PATCH_BODY,
+                },
+            },
+            include_details=True,
+        )
+        self.assertIsNone(result["version"])
+        self.assertEqual(result["news_id"], 3503357)
+        self.assertEqual(
+            [item["hero_name"] for item in result["hero_changes"]],
+            ["Saber", "Marcel", "Zhuxin"],
+        )
+
+    def test_hotfix_suffix_is_kept_as_the_version(self) -> None:
+        result = normalize_patch_record(
+            {
+                "id": 12,
+                "data": {"title": "2.1.95a PATCH NOTES", "start_time": 1781683210000},
+            },
+            include_details=False,
+        )
+        self.assertEqual(result["version"], "2.1.95a")
 
     def test_html_to_lines_handles_nested_markup_and_entities(self) -> None:
         lines = html_to_lines("<div>Hello <strong>world</strong> &amp; friends</div>")
@@ -91,6 +125,24 @@ class PatchParserTests(unittest.TestCase):
         ]
         result = patches.get_patch_list(10)
         self.assertEqual([item["version"] for item in result], ["2.1.88"])
+
+    @patch("app.services.patches._fetch_records")
+    def test_patch_list_keeps_articles_whose_title_lost_the_version(
+        self, fetch_records
+    ) -> None:
+        fetch_records.return_value = [
+            {
+                "id": 3503357,
+                "data": {
+                    "title": "16 PATCH NOTES",
+                    "start_time": 1789545600000,
+                    "cover": None,
+                },
+            }
+        ]
+        result = patches.get_patch_list(10)
+        self.assertEqual([item["news_id"] for item in result], [3503357])
+        self.assertIsNone(result[0]["version"])
 
     @patch("app.services.patches._fetch_records")
     def test_uses_last_known_good_after_upstream_failure(self, fetch_records) -> None:

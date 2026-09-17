@@ -12,10 +12,18 @@ from app.core.http import post_json_public
 
 PATCH_SOURCE_ID = "2672947"
 PATCH_CHANNEL_ID = 2678956
+# An article is patch notes when its title ends in "PATCH NOTES". The version is
+# whatever precedes that, but it is not always usable: Moonton ships titles with
+# the version truncated (news 3503357 is "16 PATCH NOTES", for patch 2.2.16) and
+# occasionally omits it entirely. Requiring a full version here dropped those
+# articles outright, so callers get version=None and resolve it from a patch
+# calendar of their own instead.
 PATCH_TITLE_RE = re.compile(
-    r"^\s*(?P<version>\d+\.\d+\.\d+)\s+PATCH\s+NOTES\s*$",
+    r"^\s*(?P<version>\S*)\s*PATCH\s+NOTES\s*$",
     re.IGNORECASE,
 )
+# Hotfixes carry a letter suffix, e.g. "2.1.95a".
+VERSION_RE = re.compile(r"^\d+\.\d+\.\d+[A-Za-z]?$")
 CHANGE_HEADING_RE = re.compile(r"^\[([^\]]+)\]\s*\(([↑↓~])\)\s*$")
 NUMBERED_SECTION_RE = re.compile(r"^\d+\.\s+")
 
@@ -181,9 +189,10 @@ def normalize_patch_record(record: dict[str, Any], *, include_details: bool) -> 
     if not title_match:
         raise ValueError(f"Not a patch-notes article: {title!r}")
 
+    version = title_match.group("version")
     news_id = int(record["id"])
     normalized: dict[str, Any] = {
-        "version": title_match.group("version"),
+        "version": version if VERSION_RE.match(version) else None,
         "news_id": news_id,
         "title": title,
         "published_at": _timestamp_to_iso(data.get("start_time")),
